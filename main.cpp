@@ -45,14 +45,13 @@ bool init() {
     outputFile << border << std::endl;
     outputFile.close();
 
-    // Stage 2: Read the newly created map into the global 'map' vector.
     std::ifstream mapFile("autosave.txt");
     if (!mapFile.is_open()) {
         std::cerr << "Could not read or locate autosave.txt" << std::endl;
         return false;
     }
 
-    map.clear(); // Ensure the map is empty before loading
+    map.clear();
     std::string mapLine;
     int currentY = 0;
     while (getline(mapFile, mapLine)) {
