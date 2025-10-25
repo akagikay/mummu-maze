@@ -4,13 +4,15 @@
 #include <vector>
 #include <cstdlib>
 #include <conio.h>
+#include <stack>
 // Define arrows keys for movement
-#define UP 72
-#define DOWN 80
-#define LEFT 75
-#define RIGHT 77
-int playerX, playerY;
-
+#define UP 72 // Up arrow key
+#define DOWN 80 // Down arrow key
+#define LEFT 75 // Left arrow key
+#define RIGHT 77 // Right arrow key
+#define UNDO 122 // Z key for undo
+int playerX, playerY; // Player's current position
+std::stack<std::pair<int, int>> moveHistory; // To store player's move history for undo operation
 std::vector<std::string> map;
 bool init(std::string filenames) {
     // Create autosave.txt from 8by8.txt with "#" as wall arounds
@@ -73,7 +75,17 @@ bool init(std::string filenames) {
 
     return true;
 }
+void undoMove() {
+    if (!moveHistory.empty()) {
+        std::pair<int, int> lastPos = moveHistory.top();
+        moveHistory.pop();
 
+        map[playerY][playerX] = ' ';
+        playerX = lastPos.first;
+        playerY = lastPos.second;
+        map[playerY][playerX] = 'P';
+    }
+}
 void clean() {
     // clean the console :))
 #ifdef _WIN32
@@ -88,44 +100,8 @@ void render() {
         std::cout << line << std::endl;
     }
 }
-
-int main() {
-    bool win = false;
-    bool alive = true;
-    int input;
-    int mapselection;
-    std::cout << "Welcome to the Maze Game!" << std::endl;
-    std::cout << "Use W A S D to move up left down right respectively." << std::endl;
-    std::cout << "Reach 'E' to win, avoid 'T' to stay alive!" << std::endl;
-    std::cout << "Select a map to play:" << std::endl;
-    std::cout << "1. 8 by 8" << std::endl;
-    std::cout << "2. 10 by 10" << std::endl;
-    std::cout << "3. 12 by 12" << std::endl;
-    std::cin >> mapselection;
-    if (mapselection == 1) {
-        std::cout << "You have selected the 8 by 8 map." << std::endl;
-        if (!init("8by8.txt")) {
-            return 1; // Exit if initialization fails
-        }
-    } 
-    else if (mapselection == 2) {
-        std::cout << "You have selected the 10 by 10 map." << std::endl;
-        if (!init("10by10.txt")) {
-            return 1; // Exit if initialization fails
-        }
-    } 
-    else if (mapselection == 3) {
-        std::cout << "You have selected the 12 by 12 map." << std::endl;
-        if (!init("12by12.txt")) {
-            return 1; // Exit if initialization fails
-        }
-    } 
-    else {
-        std::cout << "Invalid selection. Defaulting to 8 by 8 map." << std::endl;
-        mapselection = 1;
-    }  
-    clean();
-    while (alive && !win) {
+void gameLoop(bool &win, bool &alive) {
+        while (alive && !win) {
         // in each loop clean render , recive input - > process -> clean - > new render
         // # is wall
         // P is player
@@ -135,6 +111,7 @@ int main() {
         // After every input press enter :))
         // Too lazy and too late to research other medthods :))
         render();
+        int input;
         input = _getch();
         clean();
         int nextX = playerX;
@@ -159,6 +136,10 @@ int main() {
                     continue;
             }
         }
+        else if (input == UNDO) {
+            undoMove();
+            continue;
+        }
         else {
             std::cout << "Invalid input." << std::endl;
             continue;
@@ -166,25 +147,70 @@ int main() {
         if (nextY >= 0 && nextY < map.size() && nextX >= 0 && nextX < map[nextY].length()) {
             char targetCell = map[nextY][nextX];
 
-            if (targetCell == ' '){
+            if (targetCell != '#') {
+                moveHistory.push({playerX, playerY});
                 map[playerY][playerX] = ' ';
                 playerX = nextX;
                 playerY = nextY;
                 map[playerY][playerX] = 'P';
+                if (targetCell == 'E') {
+                    win = true;
+                }
+                else if (targetCell == 'T') {
+                    alive = false;
+                }
             }
-            else if (targetCell == 'E') {
-                win = true;
-                map[playerY][playerX] = ' ';
-                map[nextY][nextX] = 'P';
-            } 
-            else if (targetCell == 'T') {
-                alive = false;
-                map[playerY][playerX] = ' ';
-                map[nextY][nextX] = 'P';
-            }        
         }
     }
+}
+int mapselectionMenu(int& map) {
+    while (true) {
+        std::cout << "Welcome to the Maze Game!" << std::endl;
+        std::cout << "Use W A S D to move up left down right respectively." << std::endl;
+        std::cout << "Reach 'E' to win, avoid 'T' to stay alive!" << std::endl;
+        std::cout << "Select a map to play:" << std::endl;
+        std::cout << "1. 8 by 8" << std::endl;
+        std::cout << "2. 10 by 10" << std::endl;
+        std::cout << "3. 12 by 12" << std::endl;
+        std::cin >> map;
+        if (map == 1) {
+            break;
+        } 
+        else if (map == 2) {
+            break;
+        } 
+        else if (map == 3) {
+            break;
+        } 
+        else {
+            clean();
+            std::cout << "Invalid selection." << std::endl;
+        }
+    }
+    return 0;
+}
+std::string getMapFilename(int map) {
+    switch (map) {
+        case 1:
+            return "8by8.txt";
+        case 2:
+            return "10by10.txt";
+        case 3:
+            return "12by12.txt";
+    }
+    return 0;
+}
+int main() {
+    bool win = false;
+    bool alive = true;
+    std::string mapselection;
+    int map;
+    mapselectionMenu(map);
+    if (!init(getMapFilename(map))) {
+        return 1; // Exit if initialization fails
+    }
     clean();
+    gameLoop(win, alive);
     render();
     if (win) {
         std::cout << "\nVictory!" << std::endl;
