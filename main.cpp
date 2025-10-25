@@ -3,7 +3,12 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
-
+#include <conio.h>
+// Define arrows keys for movement
+#define UP 72
+#define DOWN 80
+#define LEFT 75
+#define RIGHT 77
 int playerX, playerY;
 
 std::vector<std::string> map;
@@ -87,7 +92,7 @@ void render() {
 int main() {
     bool win = false;
     bool alive = true;
-    std::string input;
+    int input;
     int mapselection;
     std::cout << "Welcome to the Maze Game!" << std::endl;
     std::cout << "Use W A S D to move up left down right respectively." << std::endl;
@@ -130,23 +135,30 @@ int main() {
         // After every input press enter :))
         // Too lazy and too late to research other medthods :))
         render();
-        std::cin >> input;
+        input = _getch();
         clean();
         int nextX = playerX;
         int nextY = playerY;
 
-        if (input == "w") {
-            nextY--;
-        } 
-        else if (input == "a") {
-            nextX--;
-        } 
-        else if (input == "s") {
-            nextY++;
-        } 
-        else if (input == "d") {
-            nextX++;
-        } 
+        if (input == 224){
+            switch(_getch()) {
+                case UP:
+                    nextY--;
+                    break;
+                case DOWN:
+                    nextY++;
+                    break;
+                case LEFT:
+                    nextX--;
+                    break;
+                case RIGHT:
+                    nextX++;
+                    break;
+                default:
+                    std::cout << "Invalid input." << std::endl;
+                    continue;
+            }
+        }
         else {
             std::cout << "Invalid input." << std::endl;
             continue;
